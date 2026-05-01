@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat:600|Open+Sans:600&display=swap');
+
+@font-face {
+  font-family: myFont;
+  src: url('BaseNeueTrial-SemiBoldOblique.ttf');
+}
+
+* {
+  font-family: myFont;
+  margin: 0;
+  padding: 0;
+  letter-spacing: 0.05rem;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+body {
+  background-color: #fff;
+}
+
+.loader {
+  width: 2rem;
+  height: 2rem;
+  border: 5px solid #FFF;
+  border-bottom-color: #FF3D00;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+.mockup-generator {
+  display: flex;
+  padding: 1rem;
+  padding-left: 300px;
+  padding-top: 8rem;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.mockup-generator > div {
+  width: 50%;
+  display: flex;
+}
+
+.left-container {
+  padding: 2rem;
+  width: 65% !important;
+  justify-content: center;
+  align-items: center;
+  position: sticky;
+  top: 100px;
+}
+
+.right-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem
+}
+
+.mockup-image {
+  width: 700px;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+}
+
+.mockup-design {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mockup-image img {
+  width: 100%;
+}
+
+.mockup-image-container {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  /* transform: translateX(-50%) translateY(-50%); */
+  background-color: #fff;
+  width: 700px;
+  display: flex;
+}
+
+.color-list {
+  display: grid;
+  grid-template-columns: repeat(4, 0.2fr);
+  place-items: center;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.step {
+  font-size: 1.2rem;
+}
+
+.step + div {
+  margin-left: 1.2rem;
+}
+
+.color-option {
+  display: flex;
+  flex-direction: column;
+  place-items: center;
+  width: fit-content;
+  cursor: pointer;
+  text-align: center;
+}
+
+.color-circle {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 100%;
+  border: 2px solid #6a6969;
+  position: relative;
+}
+
+.color-tick {
+  position: absolute;
+  display: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff; /* Set the color of the tick icon */
+  font-size: 0.5rem; /* Adjust the size as needed */
+}
+
+.user-design-images {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: scroll;
+  padding: 0.4rem;
+  width: 400px;
+}
+
+.user-design-image {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.111);
+  border-radius: 5px;
+  padding: 0.2rem;
+  height: fit-content;
+  cursor: pointer;
+}
+
+.user-design-image img {
+  width: 150px;
+  object-fit: cover;
+}
+
+.user-design-image p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.8rem;
+  width: 150px;
+}
+
+.active-selection {
+  background: #ff5125;
+  color: white;
+}
+
+.color-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.selected-color {
+  outline: 1px solid red;
+}
+
+.design-name-input {
+  padding: 0.6rem 0.8rem;
+  border: none;
+  outline: 1px solid silver;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  width: 60%;
+}
+
+.design-name-input::placeholder {
+  opacity: 0.6;
+}

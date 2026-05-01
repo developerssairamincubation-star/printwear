@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Import Bootstrap CSS -->
+  <!-- Import custom CSS file -->
+  <link rel="stylesheet" href="/css/designlib.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+  <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v6.0.0-beta3/css/all.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+  <title>Design Library - Printwear</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-H19W9PLCHF">
+  </script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-H19W9PLCHF');
+  </script>
+</head>
+
+<body>
+
+  <!-- navbar -->
+  <!-- Navbar starts here -->
+  <div class="banner">
+    <%- include('partials/side-logo.ejs') %>
+      <%- include('partials/top.ejs') %>
+  </div>
+  <!-- navbar  -->
+
+
+  <main class="product-lib">
+    <div class="heading-row">
+      <div style="display: flex; flex-direction: column;">
+        <h2>Your Product Library</h2>
+        <p>View your designs and check out pricing<br>
+          You can also push them to your online store once you connect your store with Printwear or place an order with
+          them.</p>
+      </div>
+      <input type="search" placeholder="Search by name or SKU..."
+        oninput="searchDesigns('designName', event.target.value)" id="name-search" />
+    </div>
+    <div class="filter-container">
+      <h3>Filter by category</h3>
+      <div class="gender-filter">
+        <button class="filter-button filter-button-active" onclick="filterProductsByGender(event, 'all')">All</button>
+        <button class="filter-button" onclick="filterProductsByGender(event,'men')">Men</button>
+        <button class="filter-button" onclick="filterProductsByGender(event, 'women')">Women</button>
+        <button class="filter-button" onclick="filterProductsByGender(event, 'unisex')">Unisex</button>
+      </div>
+    </div>
+
+    <div class="designs-wrapper">
+      <span class="loader"></span>
+    </div>
+
+  </main>
+
+  <script src="/js/vendor/aos.min.js"></script>
+  <script>
+    AOS.init();
+    var notyf = new Notyf();
+
+    const designsContainer = document.querySelector(".designs-wrapper");
+    var designsResponseData = {};
+
+    const searchDesigns = (dataKey, searchKey) => {
+      if (searchKey === '') return createDesignCards();
+      const designsData = designsResponseData.designs.filter(design => (design[dataKey].toLowerCase().trim().includes(searchKey.toLowerCase().trim()) || design["designSKU"].toLowerCase().trim().includes(searchKey.toLowerCase().trim())));
+      if (designsData.length < 1) return designsContainer.innerHTML = 'Invalid search key';
+
+      createDesignCards({ designs: designsData })
+    }
+
+    const disableButton = (buttonElement, innerTextBefore, innerTextAfter, state) => {
+      state ? buttonElement.setAttribute("disabled", true) : buttonElement.removeAttribute("disabled");
+      state ? buttonElement.classList.add("disabled") : buttonElement.classList.remove("disabled");
+      state ? buttonElement.innerHTML = `${innerTextBefore}` : buttonElement.innerHTML = `<i class="fa-regular fa-page"></i> ${innerTextAfter}`;
+    }
+
+    const openDeleteConfirmation = (button, designName, designSKU) => {
+      if (prompt("Deleting the design will completely erase your design from the database. You will not be able to place orders with this design. You will also not be able to process Shopify or WooCommerce orders that have this design as line item.\n Are you sure you wish to delete the design " + designName + "\n Type the design's name to delete it:") === designName) deleteDesign(button, designSKU)
+      else alert("Design was not deleted")
+    }
+
+    const deleteDesign = async (button, designSKU) => {
+      disableButton(button, "Deleting...", "Deleted", true);
+      try {
+        const deleteDesignRequest = await fetch("/deletedesign", {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            designSKU
+          }),
+          method: 'POST'
+        });
+        const deleteDesignResponse = await deleteDesignRequest.json();
+        if (!deleteDesignRequest.ok) return notyf.error({ message: deleteDesignResponse.error })
+        notyf.success({
+          message: "Design deleted successfully",
+          dismissible: true,
+          duration: 5000
+        })
+        document.querySelector("main").removeChild(document.querySelector(".product-modal-wrapper"))
+        fetchDesignsData();
+      } catch (error) {
+        console.log(error);
+        return notyf.error("Unable to delete design")
+      }
+    }
+
+    const addToShopify = async (button, designSKU) => {
+      disableButton(button, "Adding...", "Added to Shopify", true);
+      try {
+        const priceInput = document.querySelector(".shop-price");
+        if (/^\d+$/.test(priceInput.value) && (parseInt(priceInput.value) <= 0)) return notyf.error("Invalid Price");
+        const addToshopifyRequest = await fetch("/createshopifyproduct", {
+          headers: {
+            "Content-Type": "application/json"
+          },
+          method: "POST",
+          body: JSON.stringify({
+            designSKU,
+            price: parseInt(priceInput.value)
+          }),
+        });
+        const addToshopifyResponse = await addToshopifyRequest.json();
+        if (!addToshopifyRequest.ok) {
+          document.querySelector("main").removeChild(document.querySelector(".product-modal-wrapper"))
+          return notyf.error({
+            message: addToshopifyResponse.error ?? addToshopifyResponse.message,
+            dismissible: true,
+            duration: 5000
+          })
+        }
+        notyf.success({
+          message: "Added to shopify Store!",
+          dismissible: true,
+          duration: 5000
+        })
+        const modal = document.querySelector(".product-modal-wrapper")
+        if (modal) document.querySelector("main").removeChild(modal)
+      } catch (error) {
+        console.log(error);
+        notyf.error("Something went wrong!");
+      } finally {
+        disableButton(button, "Adding...", "Add to Shopify", false);
+      }
+    }
+
+    const addToWooCommerce = async (button, designSKU) => {
+      disableButton(button, "Adding...", "Added to WooCommerce", true);
+      try {
+        const priceInput = document.querySelector(".shop-price");
+        if (/^\d+$/.test(priceInput.value) && (parseInt(priceInput.value) <= 0)) return notyf.error("Invalid Price");
+        const addToWoocommerceRequest = await fetch("/createwoocommerceorder", {
+          headers: {
+            "Content-Type": "application/json"
+          },
+          method: "POST",
+          body: JSON.stringify({
+            designSKU,
+            price: parseInt(priceInput.value)
+          }),
+        });
+        const addToWoocommerceResponse = await addToWoocommerceRequest.json();
+        console.log(addToWoocommerceResponse);
+        if (!addToWoocommerceRequest.ok) {
+          document.querySelector("main").removeChild(document.querySelector(".product-modal-wrapper"))
+          return notyf.error({
+            message: addToWoocommerceResponse.message ?? addToWoocommerceResponse.error,
+            dismissible: true,
+            duration: 5000
+          })
+        }
+        notyf.success({
+          message: "Added to WooCommerce Store!",
+          dismissible: true,
+          duration: 5000
+        })
+        const modal = document.querySelector(".product-modal-wrapper")
+        if (modal) modal.remove();
+      } catch (error) {
+        console.log(error);
+        notyf.error("Something went wrong!");
+      } finally {
+        disableButton(button, "Adding...", "Add to WooCommerce", false);
+      }
+    }
+
+    const downloadDesign = (url) => {
+      if (!url || url === null || url === "false" || url === undefined || url === "undefined") return;
+      const aLink = document.createElement("a");
+      aLink.href = url;
+      aLink.target = "_blank";
+      document.body.appendChild(aLink);
+      aLink.click();
+      document.body.removeChild(aLink);
+    }
+
+    const openModal = (designSKU) => {
+      const designModalData = designsResponseData.designs.find(designData => designData.designSKU === designSKU);
+      const currentDesignTax = (designModalData.price + (designModalData.neckLabel ? 10 : 0)) * 0.05
+      const isDesignGenerating = !designModalData.designImage && !!(designModalData.designImageStatus?.front?.status === "processing" && designModalData.designImageStatus?.front?.jobId) || !!(designModalData.designImageStatus?.back?.status === "processing" && designModalData.designImageStatus?.back?.jobId);
+      const shouldShowBackByDefault = !(designModalData.designImage?.front && designModalData.designImage?.front != "false")
+      const defaultImageDirection = shouldShowBackByDefault ? "back" : "front"
+      const otherSideImage = defaultImageDirection === "back" ? designModalData.designImage?.front : designModalData.designImage?.back
+      const designModalDOMString = `
+      <div class="product-modal-wrapper">
+        <div class="product-modal" data-aos="fade-up">
+          <button class="modal-close">
+            <i class="fa fa-close"></i>
+          </button>
+          <div class="product-modal-image">
+            ${isDesignGenerating ? `<div class="image-processing-overlay"><i class="fa fa-spinner fa-spin"></i> Processing image...</div>` :
+          `<img
+              src="${defaultImageDirection === "back" ? designModalData.designImage?.back : designModalData.designImage?.front}"
+              alt="Design image"
+              ${(otherSideImage && otherSideImage != "false") ? `
+              onmouseover="this.src='${otherSideImage}'"
+              ` : ''}
+              onmouseout="this.src='${defaultImageDirection === "back" ? designModalData.designImage?.back : designModalData.designImage?.front}'"
+              >`
+        }
+          </div>
+          <div class="product-modal-details">
+            <h2 class="product-name">${designModalData.designName}</h2>
+            <div class="product-category-gender">
+              <h5>${designModalData.product.name}</h5>
+              <h5>SKU: ${designModalData.designSKU}</h5>
+            </div>
+            <p class="product-description">
+              ${designModalData.description || "User generated design"}
+            </p>
+            <div class="alert-info"><i class="fa fa-info-circle"></i>You can move your mouse over the image to flip sides!</div>
+            <div class="product-attributes">
+              <div class="product-colors">
+                <p>Color: </p>
+                <div class="color-circle" style="background:${designModalData.product.hex};" title="${designModalData.product.color}"></div>
+              </div>
+              <div class="product-sizes">
+                <p>Size: </p>
+                <div class="size-circle">${designModalData.product.size}</div>
+              </div>
+            </div>
+            <div class="product-price">
+              <h4>Price: ₹${(parseFloat(designModalData.price.toFixed(2)) + parseFloat(currentDesignTax)).toFixed(2)}</h4>
+              <table class="price-breakdown">
+                <tr>
+                  <td>Base Price</td>
+                  <td>₹${designModalData.product.price.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td>Print Price</td>
+                  <td>₹${(designModalData.price - designModalData.product.price - (designModalData.neckLabel ? 10 : 0)).toFixed(2)}</td>
+                </tr>
+                ${designModalData.neckLabel ? `
+                  <tr>
+                    <td>Neck label Price</td>
+                    <td>₹10</td>
+                  </tr>
+                  `: ''}
+                <tr>
+                  <td>Tax</td>
+                  <td>₹${currentDesignTax.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td>Total Price</td>
+                  <td>₹${(designModalData.price + currentDesignTax).toFixed(2)}</td>
+                </tr>
+              </table>
+            </div>
+            <div class="action-buttons">
+              <button ${isDesignGenerating ? "disabled='true'": ''} class="${isDesignGenerating ? 'disabled' : ''}" onclick="downloadDesign('${defaultImageDirection === "back" ? designModalData.designImage?.back : designModalData.designImage?.front}')"><i class="fa fa-download"></i> Download ${defaultImageDirection === "back" ? "Back" : "Front"} Design</button>
+              ${(defaultImageDirection === "back" ? designModalData.designImage?.front : designModalData.designImage?.back) ? `
+              <button ${isDesignGenerating ? "disabled='true'": ''} class="${isDesignGenerating ? 'disabled' : ''}" onclick="downloadDesign('${defaultImageDirection === "back" ? designModalData.designImage?.front : designModalData.designImage?.back}')"><i class="fa fa-download"></i> Download ${defaultImageDirection === "back" ? "Front" : "Back"} Design</button>
+              `: ''}
+              <button ${isDesignGenerating ? "disabled='true'": ''} class="delete-design ${isDesignGenerating ? 'disabled' : ''}" onclick="openDeleteConfirmation(this,'${designModalData.designName}', '${designModalData.designSKU}')"><i class="fa fa-trash"></i> Delete Design</button>
+            </div>
+            <p>Publish:</p>
+            <div style="display: flex; gap: 0.4rem; align-items: center;">₹ 
+              <input type="number" inputmode="numeric" class="shop-price" value='${(designModalData.price * 1.05).toFixed(2)}' placeholder="₹" />
+              <p style="font-size: 0.84rem">Enter retail price for your shop. <br /> You can change it later in your shop settings:</p>
+            </div>
+            <div class="publish-buttons">
+              <button id="add-shopify" onclick="addToShopify(this, '${designModalData.designSKU}')" ${designModalData.isAddedToShopify || isDesignGenerating ? 'class="disabled" disabled="true"' : ''}><i class="fa-brands fa-shopify"></i>${designModalData.isAddedToShopify ? ' Added to Shopify ✅' : ' Add to Shopify'}</button>
+              <button id="add-woocommerce" onclick="addToWooCommerce(this, '${designModalData.designSKU}')" ${designModalData.isAddedToWoocommerce || isDesignGenerating ? 'class="disabled" disabled="true"' : ''}><img src="images/WooCommerce_logo.svg" width="30" alt=""> ${designModalData.isAddedToWoocommerce ? 'Added to WC ☑️' : 'Add to WooCommerce'}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      `;
+      document.querySelector("main").insertAdjacentHTML("beforeend", designModalDOMString);
+
+      const closeModalButton = document.querySelector(".modal-close");
+      closeModalButton.addEventListener("click", (e) => {
+        document.querySelector("main").removeChild(document.querySelector(".product-modal-wrapper"))
+      })
+    }
+
+    const createDesignCards = (data = designsResponseData) => {
+      const designCardsDOMString = data.designs.map(design => {
+        if (design.designImage?.front?.includes("printwear.in") && !design.designImage?.front?.includes("admin.printwear.in")) {
+          design.designImage.front = design.designImage.front?.replace("printwear.in", "admin.printwear.in");
+          design.designImage.back = design.designImage.back?.replace("printwear.in", "admin.printwear.in");
+        }
+        design.designItems = design.designItems.map(item => {
+          if (item?.URL?.includes("printwear.in") && !item?.URL?.includes("admin.printwear.in")) {
+            return {
+              ...item,
+              URL: item.URL.replace("printwear.in", "admin.printwear.in")
+            }
+          } else {
+            return item
+          }
+        })
+        const isDesignGenerating = !design.designImage && (design.designImageStatus?.front?.status === "processing" && design.designImageStatus?.front?.jobId) || (design.designImageStatus?.back?.status === "processing" && design.designImageStatus?.back?.jobId);
+        const shouldShowBackByDefault = !(design.designImage?.front && design.designImage?.front != "false")
+        const defaultImageDirection = shouldShowBackByDefault ? "back" : "front"
+        return `
+          <div class="design-card" data-aos="fade-up">
+            <div class="card-img">
+              ${isDesignGenerating && (!design.designImage?.front || !design.designImage?.back) ? '<div class="image-processing-overlay" style="flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column;"><i class="fa fa-spinner fa-spin"></i> Processing image...</div>' : `
+              <img src="${(defaultImageDirection == "front") ? design.designImage?.front : design.designImage?.back}" loading="lazy">
+              `}
+            </div>
+            <div class="name-price">
+              <div style="display:flex; gap: 2px; justify-content: space-between; align-items: center">
+                <h3>${design.designName}</h3>
+                <p class='name-sku'>${design.designSKU}</p>
+              </div>
+              <p style="opacity: 0.8; font-size: 0.6rem">${design.product.style}</p>
+              </div>
+            <div class="details">
+              <div class="view-btn">
+                <button onclick="openModal('${design.designSKU}')">View</button>
+              </div>
+              <p style="font-size: 14px">₹${design.price.toFixed(2)}</p>
+            </div>
+          </div>
+        `
+      }).join('\n');
+      designsContainer.innerHTML = designCardsDOMString;
+
+      /* designsContainer.addEventListener("click", (e) => {
+        const openModalButton = e.target.closest(".view-btn button");
+        if (openModalButton) {
+          openModal(openModalButton.dataset.designid);
+        }
+      }) */
+    }
+
+    const filterProductsByGender = (e, category) => {
+
+      const filterByGenderButtons = document.querySelectorAll(".filter-button");
+      filterByGenderButtons.forEach(filterBtn => filterBtn.classList.remove("filter-button-active"));
+
+      e.target.classList.add("filter-button-active");
+
+      if (category === "all") return createDesignCards();
+
+      const designsData = designsResponseData.designs.filter(design => design.product['gender'].toLowerCase().trim().includes(category.toLowerCase().trim()));
+      if (designsData.length < 1) return designsContainer.innerHTML = `No products found for filter: "${category}"`;
+      createDesignCards({ designs: designsData })
+    }
+
+    const fetchDesignsData = async () => {
+      try {
+        const designsFetchRequest = await fetch("/getdesigns");
+        designsResponseData = await designsFetchRequest.json();
+
+        const maleFilterPattern = new RegExp(/\bmen\b|\bmens\b/i);
+        const femaleFilterPattern = new RegExp(/\bwomen\b|\bwomens\b/i);
+
+        designsResponseData.designs = designsResponseData.designs.map(design => {
+          if (maleFilterPattern.test(design.product.name)) design.product['gender'] = "men";
+          else if (femaleFilterPattern.test(design.product.name)) design.product['gender'] = "women";
+          else design.product['gender'] = "unisex";
+          return design
+        }).reverse()
+
+        console.log(designsResponseData);
+
+        if (designsResponseData.designs.length > 0) {
+          return createDesignCards();
+        }
+        designsContainer.innerHTML = "<p> No designs yet! </p>";
+      } catch (error) {
+        designsContainer.innerHTML = `
+          <p>
+            There was an error trying to fetch data. <br>
+            ${error}
+          </p>
+        `;
+        console.log(error);
+      }
+    }
+
+    fetchDesignsData();
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/css/storeorder.css" />
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v6.0.0-beta3/css/all.css" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <title>
+        Store order details
+    </title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H19W9PLCHF">
+    </script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-H19W9PLCHF');
+    </script>
+</head>
+
+<body>
+    <div class="banner">
+        <%- include('partials/side-logo.ejs') %> <%- include('partials/top.ejs') %>
+    </div>
+    <div class="container">
+        <div class="mngord-head">
+            <div class="tab-widget">
+                <div class="store-selectors">
+                    <a href="/manageorder">
+                        <h2>Printwear Orders</h2>
+                    </a>
+                    <h2 class="active-store">Store Orders</h2>
+                </div>
+                <hr />
+            </div>
+            <button class="filter-button filter-button-active" onclick="changeWidget(event, 'shopify')">Shopify</button>
+            <button class="filter-button" onclick="changeWidget(event,'woo')">WooCommerce</button>
+        </div>
+        <div class="store-orders-container">
+            <div class="shopify-order">
+                <div class="search-options">
+                    <label for="search-orders">Search</label>
+                    <input id="search-orders" type="search" placeholder="Order ID, Tracking number, Customer Name, Shipment ID" />
+                </div>
+                <table>
+                    <thead>
+                        <th>S. No.</th>
+                        <th>Order ID</th>
+                        <th>Customer Name</th>
+                        <th>Amount paid</th>
+                        <th>Order placed on</th>
+                        <th>Order Status</th>
+                        <th>Action</th>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <span class="loader" id="shpfy-loader"></span>
+            </div>
+            <div class="woo-order">
+                <div class="search-options">
+                    <label for="search-orders">Search</label>
+                    <input id="search-orders" type="search" placeholder="Order ID, Tracking number, Customer Name, Shipment ID" />
+                </div>
+                <table>
+                    <thead>
+                        <th>S. No.</th>
+                        <th>Order ID</th>
+                        <th>Customer Name</th>
+                        <th>Amount paid</th>
+                        <th>Order placed on</th>
+                        <th>Delivery Status</th>
+                        <th>Action</th>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <span class="loader" id="wc-loader"></span>
+            </div>
+        </div>
+        <script>
+            var notyf = new Notyf();
+
+            const shopifyTable = document.querySelector(".shopify-order table > tbody");
+            const shopifyTableContainer = document.querySelector(".shopify-order");
+            const wooTable = document.querySelector(".woo-order table > tbody");
+            const wooTableContainer = document.querySelector(".woo-order");
+
+            const shopifyLoader = document.getElementById("shpfy-loader")
+            const wcLoader = document.getElementById("wc-loader")
+
+            let isWooDataFetched = false;
+
+            const populateShopifyTable = (data = fetchOrderResponse.shopify) => {
+                shopifyLoader.classList.add("removed")
+                if (!data || data.length == 0) { 
+                    return shopifyTable.innerHTML = 'No data found!'
+                };
+                console.log(data)
+                shopifyTable.innerHTML = data.map((order, i) => `
+                    <tr>
+                        <td>${i+1}</td>
+                        <td>${order.name}</td>
+                        <td>${(order.customer && (order.customer.first_name + ' ' + order.customer.last_name)) || (order.billing_address?.name || 'No data')}</td>
+                        <td>₹${order.current_total_price}</td>
+                        <td>${order.created_at? new Date(order.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : null}</td>
+                        <td>${order.isOrderPlaced ? `<h3 class="status-badge ${order.printwearStatus}">${order.printwearStatus}</h3>`: order.fulfillment_status ?? 'Unfulfilled'}</td>
+                        <td><a href=${order.isOrderPlaced ? `/order/${order.printwearOrderId}`: `/mystores/shopify/${order.id}`} class="proceed-btn">${order.isOrderPlaced ? `Details ▶` : `Next ▶`}</a></td>
+                    </tr>
+                `).join('\n')
+            }
+            
+            const populateWooTable = (data = fetchOrderResponse.woo) => {
+                wcLoader.classList.add("removed")
+                if (!data || data.length == 0) {
+                    return wooTable.innerHTML = 'No data found!'
+                };
+                console.log(data)
+                wooTable.innerHTML = data.woo.map((order, i) => `
+                    <tr>
+                        <td>${i+1}</td>
+                        <td>${order.id}</td>
+                        <td>${((order.billing.first_name + ' ' + order.billing.last_name) || 'No data')}</td>
+                        <td>₹${order.total}</td>
+                        <td>${order.date_created? new Date(order.date_created).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : null}</td>
+                        <td>${order.isOrderPlaced? `<h3 class="status-badge ${order.printwearStatus}">${order.printwearStatus}</h3>` : order.status ?? 'unknown'}</td>
+                        <td><a href=${order.isOrderPlaced ? `/order/${order.printwearOrderId}` : `/mystores/woo/${order.id}`} class="proceed-btn">${order.isOrderPlaced ? `Details ▶` : `Next ▶`}</a></td>
+                    </tr>
+                `).join('\n')
+            }
+            
+            const fetchShopifyOrders = async () => {
+                const fetchOrderRequest = await fetch('/getshopifyorders');
+                fetchOrderResponse = await fetchOrderRequest.json();
+                console.log("🚀 ~ fetchOrders ~ fetchOrderResponse:", fetchOrderResponse)
+
+                if (!fetchOrderRequest.ok) notyf.error({ message: fetchOrderResponse.error });
+
+                populateShopifyTable();
+            }
+
+            const fetchWooOrders = async () => {
+                const fetchOrderRequest = await fetch('/getwooorders');
+                fetchOrderResponse.woo = await fetchOrderRequest.json();
+                
+                console.log("🚀 ~ fetchOrders ~ fetchOrderResponse:", fetchOrderResponse.woo)
+
+                if (!fetchOrderRequest.ok) return notyf.error({ message: fetchOrderResponse.woo.error });
+
+                populateWooTable();
+            }
+
+            const changeWidget = (e, type='shopify') => {
+                const filterByGenderButtons = document.querySelectorAll(".filter-button");
+                filterByGenderButtons.forEach(filterBtn => filterBtn.classList.remove("filter-button-active"));
+
+                e.target.classList.add("filter-button-active");
+
+                switch(type) {
+                    case 'shopify': 
+                        shopifyTableContainer.style.display = "flex";
+                        wooTableContainer.style.display = "none";
+                        break;
+                    case 'woo':
+                        if (!isWooDataFetched) fetchWooOrders();
+                        wooTableContainer.style.display = "flex";
+                        shopifyTableContainer.style.display = "none";
+                        break;
+                }
+            }
+
+            fetchShopifyOrders();
+            
+        </script>
+    </div>
+</body>
+
+</html>

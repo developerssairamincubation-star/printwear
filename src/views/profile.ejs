@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= data.userData.name %>'s profile - Printwear</title>
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v6.0.0-beta3/css/all.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
+	<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H19W9PLCHF">
+    </script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-H19W9PLCHF');
+    </script>
+</head>
+
+<body>
+    <div class="banner">
+        <%- include('partials/side-logo.ejs') %>
+            <%- include('partials/top.ejs') %>
+    </div>
+    
+    <div class="profile" 
+    style="
+        padding: 1rem;
+        padding-left: 300px;
+        padding-top: 6rem;
+        margin: auto;
+    ">
+        <h4 class="font-weight-bold py-3 mb-4">
+            Account settings
+        </h4>
+        <div class="card overflow-hidden">
+            <div class="row no-gutters row-bordered row-border-light">
+                <div class="col-md-3 pt-0">
+                    <div class="list-group list-group-flush account-settings-links">
+                        <a class="list-group-item list-group-item-action active" data-toggle="list"
+                            href="#account-general">General</a>
+                        <a class="list-group-item list-group-item-action" data-toggle="list"
+                            href="#account-address">Address</a>
+                        <a class="list-group-item list-group-item-action" data-toggle="list"
+                            href="#account-change-password">Change password</a>
+                        <a class="list-group-item list-group-item-action" data-toggle="list"
+                            href="#gst-info">GST Details</a>
+                        <a class="list-group-item list-group-item-action" data-toggle="list"
+                            href="#account-connections">My stores</a>
+                        <a class="list-group-item bg-danger text-white   list-group-item-action" data-toggle="list"
+                            href="#account-info">Delete Account</a>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="tab-content">
+                        <div class="tab-pane fade active show" id="account-general">
+                            <hr class="border-light m-0">
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" name="username" class="form-control" value="<%= data.userData.name ? data.userData.name : '' %>">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="firstName" id="first-name" class="form-control" required value="<%= data.userData.firstName ? data.userData.firstName : '' %>">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="lastName" id="last-name" class="form-control" required value="<%= data.userData.lastName ? data.userData.lastName : '' %>">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">E-mail</label>
+                                    <input type="text" class="form-control mb-1" value="<%= data.userData.email %>" disabled>
+                                    <!-- <div class="alert alert-warning mt-3">
+                                        Your email is not confirmed. Please check your inbox.<br>
+                                        <a href="javascript:void(0)">Resend confirmation</a>
+                                    </div> -->
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone</label>
+                                    <input type="text" class="form-control" value="<%= data.userData.phone %>" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Your Brand Name</label>
+                                    <input type="text" name="brandName" required class="form-control" id="brand-name" value="<%= data.userData.brandName ? data.userData.brandName : '' %>">
+                                </div>
+                                <div class="text-right mt-3">
+                                    <button type="button" onclick="changeName()" class="btn btn-primary">Save changes</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="account-address">
+                            <hr class="border-light m-0">
+                            <div class="card-body">
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="inputFN">First Name</label>
+                                        <input required type="text" class="form-control" id="inputFN" value="<%= data.userData.billingAddress?.firstName %>">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="inputLN">Last Name</label>
+                                        <input required type="text" class="form-control" id="inputLN" value="<%= data.userData.billingAddress?.lastName %>">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="inputPhone">Phone</label>
+                                        <input required type="tel" class="form-control" id="inputPhone" value="<%= data.userData.billingAddress?.phone %>">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="inputEmail">Email</label>
+                                        <input required type="email" class="form-control" id="inputEmail" placeholder="" value="<%= data.userData.billingAddress?.email %>">
+                                    </div>
+                                </div>
+                            <div class="form-group">
+                                <label for="inputAddress">Address</label>
+                                <input required type="text" class="form-control" id="inputAddress" placeholder="" value="<%= data.userData.billingAddress?.streetLandmark %>">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="inputCity">City</label>
+                                    <input required type="text" class="form-control" id="inputCity" value="<%= data.userData.billingAddress?.city %>">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="inputState">State</label>
+                                    <select id="inputState" class="form-control">
+                                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                        <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                                        <option value="Assam">Assam</option>
+                                        <option value="Bihar">Bihar</option>
+                                        <option value="Chhattisgarh">Chhattisgarh</option>
+                                        <option value="Goa">Goa</option>
+                                        <option value="Gujarat">Gujarat</option>
+                                        <option value="Haryana">Haryana</option>
+                                        <option value="Himachal Pradesh">Himachal Pradesh</option>
+                                        <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                                        <option value="Jharkhand">Jharkhand</option>
+                                        <option value="Karnataka">Karnataka</option>
+                                        <option value="Kerala">Kerala</option>
+                                        <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                        <option value="Maharashtra">Maharashtra</option>
+                                        <option value="Manipur">Manipur</option>
+                                        <option value="Meghalaya">Meghalaya</option>
+                                        <option value="Mizoram">Mizoram</option>
+                                        <option value="Nagaland">Nagaland</option>
+                                        <option value="Odisha">Odisha</option>
+                                        <option value="Punjab">Punjab</option>
+                                        <option value="Rajasthan">Rajasthan</option>
+                                        <option value="Sikkim">Sikkim</option>
+                                        <option value="Tamil Nadu" selected>Tamil Nadu</option>
+                                        <option value="Telangana">Telangana</option>
+                                        <option value="Tripura">Tripura</option>
+                                        <option value="Uttarakhand">Uttarakhand</option>
+                                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                        <option value="West Bengal">West Bengal</option>
+                                        <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                                        <option value="Chandigarh">Chandigarh</option>
+                                        <option value="Dadra and Nagar Haveli">Dadra and Nagar Haveli</option>
+                                        <option value="Daman and Diu">Daman and Diu</option>
+                                        <option value="Delhi">Delhi</option>
+                                        <option value="Lakshadweep">Lakshadweep</option>
+                                        <option value="Puducherry">Puducherry</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-2">
+                                    <label for="inputZip">Pincode</label>
+                                    <input required type="text" class="form-control" id="inputZip" value="<%= data.userData.billingAddress?.pincode %>">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" onclick="saveAddress()">Save Changes</button>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="account-change-password">
+                            <div class="card-body pb-2">
+                                <div class="form-group">
+                                    <label class="form-label">Current password</label>
+                                    <input type="password" id="current-pwd" required="true" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">New password</label>
+                                    <input type="password" id="new-pwd" required="true" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Repeat new password</label>
+                                    <input type="password" id="confirm-pwd" required="true" class="form-control">
+                                </div>
+                                <div class="text-right mt-3">
+                                    <button type="button" onclick="changePassword()" class="btn btn-primary">Save changes</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="gst-info">
+                            <div class="alert mt-3">
+                                <p>Configure your GST details.</p>
+                            </div>
+                            <div class="card-body pb-2">
+                                <div class="form-group">
+                                    <label class="form-label">Enter GST No.</label>
+                                    <input type="text" class="form-control" id="gst-no" value="<%= data.userData.gstNo %>" placeholder="">
+                                </div>
+                                <div class="text-right mt-3">
+                                    <button type="button" onclick="saveGST()" class="btn btn-primary">Save changes</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="account-info">
+                            <div class="alert alert-danger mt-3">
+                                <p>Deleting account is irreversible and you will permanently delete all data, designs, store details, orders, etc.</p>
+                            </div>
+                            <div class="card-body pb-2">
+                                <div class="form-group">
+                                    <label class="form-label">Enter password</label>
+                                    <input type="text" class="form-control" placeholder="Your password">
+                                </div>
+                                <div class="text-right mt-3">
+                                    <button type="button" onclick="deleteUser()" class="btn btn-default">Save changes</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="account-connections">
+                            <div class="card-body">
+                                <h4>WooCommerce Store:</h4>
+                                
+                                <% if (data.storeData?.wooCommerceStore?.shopName) { %>
+                                    <div class="form-group">
+                                        <label class="form-label">WooCommerce Store name:</label>
+                                        <input type="text" class="form-control" disabled value="<%= data.storeData?.wooCommerceStore?.shopName?? 'Not yet connected' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">WooCommerce Consumer Key:</label>
+                                        <input type="text" class="form-control" disabled value="<%= data.storeData?.wooCommerceStore?.consumerKey?? 'Not yet connected' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">WooCommerce Store URL:</label>
+                                        <input type="text" class="form-control" disabled value="<%= data.storeData?.wooCommerceStore?.url?? 'Not yet connected' %>">
+                                    </div>
+                                <% } else { %>
+                                    <div class="text-left mt-3">
+                                        <button type="button" onclick="location.href = '/connectstore'" class="btn btn-primary">Connect to store</button>
+                                    </div>
+                                <% } %>                             
+                            </div>
+                            <div class="card-body">
+                                <h4>Shopify Store:</h4>
+                                <% if (data.storeData?.shopifyStore?.shopName) { %>
+                                    <div class="form-group">
+                                        <label class="form-label">Shopify Store name:</label>
+                                        <input type="text" class="form-control" disabled value="<%= data.storeData?.shopifyStore?.shopName?? 'Not yet connected' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Shopify Access Token:</label>
+                                        <input type="text" class="form-control" disabled value="<%= data.storeData?.shopifyStore?.shopifyAccessToken?? 'Not yet connected' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Shopify Store URL:</label>
+                                        <input type="text" class="form-control" disabled value="<%= data.storeData?.shopifyStore?.shopifyStoreURL?? 'Not yet connected' %>">
+                                    </div>
+                                    <div class="text-left mt-3">
+                                        <button type="button" onclick="location.href = '/connectstore'" class="btn btn-primary">Edit</button>
+                                    </div>
+                                <% } else { %>
+                                    <div class="text-left mt-3">
+                                        <button type="button" onclick="location.href = '/connectstore'" class="btn btn-primary">Connect to store</button>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        var notyf = new Notyf();
+        const shouldReturn = new URLSearchParams(location.search).get('return');
+
+        const disableButton = (e, state, text = 'Please wait...') => {
+            if (state) {
+                e.target.setAttribute("disabled", true);
+                e.target.classList.add("disable-button")
+                e.target.innerHTML = text
+            } else {
+                e.target.removeAttribute("disabled");
+                e.target.classList.remove("disable-button")
+                e.target.innerHTML = "Save"
+            }
+        }
+
+        const saveAddress = async () => {
+            const firstName = document.getElementById("inputFN");
+            const lastName = document.getElementById("inputLN");
+            const address = document.getElementById('inputAddress');
+            const email = document.getElementById('inputEmail');
+            const city = document.getElementById('inputCity');
+            const state = document.getElementById('inputState');
+            const pincode = document.getElementById('inputZip');
+            const phone = document.getElementById('inputPhone');
+            for(let i of [firstName, lastName, address, email, city, state, pincode, phone]) if (!i.reportValidity()) {
+                console.log(i);
+                alert('Check ', i.parentNode.children[0].innerText)
+                return i.focus();
+            }
+            try {
+                const updateInfoRequest = await fetch("/updateinfo", {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'POST',
+                    body: JSON.stringify({
+                        type: 'address',
+                        firstName: firstName.value,
+                        lastName: lastName.value,
+                        address: address.value,
+                        city: city.value,
+                        state: state.value,
+                        email: email.value,
+                        pincode: pincode.value,
+                        phone: phone.value
+                    })
+                });
+                const updateInfoResponse = await updateInfoRequest.json();
+                console.log("🚀 ~ saveAddress ~ updateInfoResponse:", updateInfoResponse)
+                if (!updateInfoRequest.ok) {
+                    notyf.error(updateInfoResponse.message)
+                    location.reload();
+                }
+                if (shouldReturn == "true") location.href = '/placeorder/billing';
+                return notyf.success(updateInfoResponse.message);
+            } catch (error) {
+                console.log(error);
+                notyf.error('Something went wrong!');
+            } 
+        }
+
+        const changePassword = async () => {
+            const currentPwd = document.getElementById('current-pwd');
+            const newPwd = document.getElementById('new-pwd');
+            const confirmPwd = document.getElementById('confirm-pwd');
+            for(let i of [currentPwd, newPwd, confirmPwd]) {
+                if (!i.reportValidity()) return alert('Check ', i.parentNode.children[0].innerText);
+            }
+            try {
+                const changePasswordRequest = await fetch("/changepassword", {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'POST',
+                    body: JSON.stringify({
+                        currentPwd: currentPwd.value ,
+                        newPwd: newPwd.value ,
+                        confirmPwd: confirmPwd.value 
+                    })
+                });
+                const changePasswordResponse = await changePasswordRequest.json();
+                console.log(changePasswordResponse)
+                if (changePasswordRequest.ok) {
+                    notyf.success("Password changed successfully!");
+                    return location.reload();
+                } else if (changePasswordRequest.status === 400) {
+                    return notyf.error(changePasswordResponse.message);
+                } else {
+                    return notyf.error("Password could not be changed!");
+                }
+            } catch (error) {
+                console.log(error);
+                return notyf.error("Something went wrong!");
+            }
+        }
+
+        const saveGST = async () => {
+            const gst = document.querySelector("#gst-no");
+            if (!gst.value) return notyf.error("GST no. invalid");
+            try {
+                const updateInfoRequest = await fetch("/updateinfo", {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'POST',
+                    body: JSON.stringify({
+                        type: "gst",
+                        gst: gst.value
+                    })
+                });
+                const updateInfoResponse = await updateInfoRequest.json();
+                if (updateInfoRequest.ok) {
+                    return notyf.success("Information updated successfully!");
+                    location.reload();
+                } else if (updateInfoRequest.status === 404) {
+                    return notyf.error(updateInfoResponse.message);
+                } else {
+                    return notyf.error("Information could not be changed!");
+                }
+            } catch (error) {
+                console.log(error);
+                notyf.error('Something went wrong!');
+            }
+            notyf.success("Details saved!");
+        }
+
+        const changeName = async () => {
+            const firstNameInput = document.querySelector("#first-name");
+            const lastNameInput = document.querySelector("#last-name");
+            const brandNameInput = document.querySelector("#brand-name");
+            for(let i of [firstNameInput, lastNameInput, brandNameInput]) if (!i.reportValidity()) return;
+            try {
+                const updateInfoRequest = await fetch("/updateinfo", {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'POST',
+                    body: JSON.stringify({
+                        type: "general",
+                        firstName: firstNameInput.value,
+                        lastName: lastNameInput.value,
+                        brandName: brandNameInput.value
+                    })
+                });
+                const updateInfoResponse = await updateInfoRequest.json();
+                if (updateInfoRequest.ok) {
+                    return notyf.success("Information updated successfully!");
+                    location.reload();
+                } else if (updateInfoRequest.status === 404) {
+                    return notyf.error(updateInfoResponse.message);
+                } else {
+                    return notyf.error("Information could not be changed!");
+                }
+            } catch (error) {
+                console.log(error);
+                notyf.error('Something went wrong!');
+            } 
+        }
+
+        const deleteUser = async () => {
+            console.log("Delete account triggered!");
+        }
+    </script>
+</body>
+
+</html>

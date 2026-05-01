@@ -1,0 +1,191 @@
+.billing-address-form, .retail-order-form, .shipping-address-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+    width: 70%;
+}
+
+.form-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+.form-group.full-width {
+    grid-template-columns: 1fr;
+    gap: unset;
+}
+label {
+    font-weight: bold;
+}
+input[type="text"], input[type="email"], input[type="number"], select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.order-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.3rem;
+}
+
+.orders-list {
+    list-style-type: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    gap: 0.4rem;
+}
+
+.orders-list li {
+    display: flex;
+    gap: 1.2rem;
+    width: 450px;
+    padding: 0.3rem;
+    align-items: center;
+    justify-content: space-evenly;
+    outline: 1px solid silver;
+    border-radius: 5px;
+}
+
+h4 {
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+h5 {
+    font-weight: 500;
+}
+
+.billing-button {
+    padding: 0.3rem 0.6rem;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    color: white;
+    background-color: #F05A30;
+    border: none;
+    cursor: pointer;
+}
+
+.bill-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;    
+}
+
+hr {
+    border: none;
+    outline: none;
+    width: 100%;
+    height: 1px;
+    background-color: #000;
+}
+
+.disabled {
+    background-color: #ff7653 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    opacity: 0.6;
+ }
+
+.left-bill {
+    grid-row: 1 / span 3;
+}
+
+.right-bill {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;  
+}
+
+input:focus:not(:valid) {
+    color: red;
+    outline: 1px solid red;
+}
+
+input:valid {
+    outline: none;
+}
+
+fieldset input {
+    margin: 0.4rem;
+    margin-bottom: 0.8rem;
+}
+
+fieldset {
+    padding: 1rem;
+    border-radius: 5px;
+}
+
+fieldset label {
+    font-weight: 400;
+}
+
+fieldset h5 {
+    padding: 0.2rem 0.3rem;
+    background-color: #ebebeb;
+    color: #434343;
+    font-size: 0.8rem;
+    border-radius: 3px;
+    width: min-content;
+    font-weight: lighter;
+    display: inline;
+}
+
+fieldset h6 {
+    display: inline;
+    padding: 0.2rem 0.3rem;
+    background-color: hsl(136, 100%, 85%);
+    color: rgb(83, 208, 83);
+    font-size: 0.6rem;
+    border-radius: 6px;
+    width: min-content;
+}
+
+.loader {
+    width: 4rem;
+    height: 4rem;
+    border: 5px solid #FFF;
+    border-bottom-color: #FF3D00;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+    }
+
+    @keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+    }
+
+.product-modal-wrapper {
+  width: 100%;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 103
+}
+
+.product-modal {
+  width: 80%;
+  height: 80%;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background: white;
+  padding: 1rem;
+}

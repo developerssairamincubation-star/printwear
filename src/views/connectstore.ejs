@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/connectyourstore.css">
+    <link rel="stylesheet" href="/css/vendor/aos.min.css">
+    <script src="js/vendor/aos.min.js"></script>
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v6.0.0-beta3/css/all.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <title>Connect Your Store - Printwear</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H19W9PLCHF">
+    </script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-H19W9PLCHF');
+    </script>
+</head>
+
+<body>
+    <div class="banner">
+        <%- include('partials/side-logo.ejs') %>
+            <%- include('partials/top.ejs') %>
+    </div>
+    <div class="cntyourstore">
+        <div class="stores d-flex flex-row m-5">
+            <button class="store m-5" id="shopify-toggle" data-aos="fade-up">
+                <img src="images/shopify.png" id="str">
+                <p>Connect</p>
+            </button>
+            <button class="store m-5" id="woocommerce-toggle" data-aos="fade-up">
+                <img src="images/woo-commerce.png" id="str">
+                <p>Connect</p>
+            </button>
+        </div>
+        <div class="shopify-form">
+            <form id="shopify-data-form" action="/connect-shopify" method="post">
+                <p style="font-size: 12px; color: #333; padding: 8px; border-radius: 8px; background: rgba(255, 0, 0, 0.292)"><strong>Access scopes required:</strong> read_orders, read_products, write_products, write_product_listings, read_product_listings, read_all_orders</p>
+                <p style="font-size: 12px; color: #333; padding: 8px; border-radius: 8px; background: rgba(255, 0, 0, 0.292)"><strong>Webhook Version:</strong> 2025-07 </p>
+                <div class="input-wrapper">
+                    <label for="store_name">Select a name for your store:</label>
+                    <input required type="text" placeholder="Eg.: My mug store" name="store_name" id="inp-s0" />
+                </div>
+                <div class="input-wrapper">
+                    <label for="store_url">Shopify Store URL (just enter domain name, no need for https://):</label>
+                    <input required type="text" placeholder="yourstoredomain.com" name="store_url" id="inp-s1" />
+                </div>
+                <div class="input-wrapper">
+                    <label for="access_token">Shopify Access Token:</label>
+                    <input required type="text" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxx" name="access_token" id="inp-s2" />
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+        <div class="woocommerce-form">
+            <form id="woocommerce-data-form" action="/connect-woocommerce" method="post">
+
+                <div class="input-wrapper">
+                    <label for="store_name">Select a name for your store:</label>
+                    <input required type="text" placeholder="Eg.: My mug store" name="store_name" id="inp-w0" />
+                </div>
+                
+                <div class="input-wrapper">
+                    <label for="store_url">WooCommerce Store URL (just enter domain name, no need for https://):</label>
+                    <input required type="text" placeholder="yourstoredomain.com" name="store_url" id="inp-w1" />
+                </div>
+                <div class="input-wrapper">
+                    <label for="consumer_key">WooCommerce Consumer Key:</label>
+                    <input required type="text" placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxxx" name="consumer_key" id="inp-w2" />
+                </div>
+                <div class="input-wrapper">
+                    <label for="consumer_secret">WooCommerce Consumer Secret:</label>
+                    <input required type="text" placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxxx" name="consumer_secret" id="inp-w3" />
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+    <% var status1 = status;  %>
+    <script>
+        AOS.init();
+        var notyf = new Notyf();
+        let success = "<%= status1 %>";
+
+        if (success != '') {
+            notyf.success({
+                message: "Added Shopify Store",
+                dismissible: true,
+            });
+        }
+        
+        const shopifyToggleBtn = document.querySelector("#shopify-toggle");
+        const woocommerceToggleBtn = document.querySelector("#woocommerce-toggle");
+        const shopifyForm = document.querySelector(".shopify-form");
+        const woocommerceForm = document.querySelector(".woocommerce-form");
+
+        shopifyToggleBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            shopifyForm.style.display = "block";
+            woocommerceForm.style.display = "none"; 
+        });
+        
+        woocommerceToggleBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            woocommerceForm.style.display = "block"; 
+            shopifyForm.style.display = "none";
+        });
+
+        shopifyForm.children[0].addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = shopifyForm.children[0].children[shopifyForm.children[0].children.length - 1];
+            try {
+                const shopifyData = new FormData(e.target);
+                btn.classList.add("disable-button")
+                const shopifyRequest = await fetch("/connect-shopify", { 
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        access_token: shopifyData.get('access_token'),
+                        store_url: shopifyData.get('store_url'),
+                        store_name: shopifyData.get('store_name'),
+                    })
+                });
+                const shopifyResponse = await shopifyRequest.json();
+                console.log("🚀 ~ fetchStoreDetails ~ shopifyResponse:", shopifyResponse)
+
+                if (!shopifyRequest.ok) return notyf.error({ message: shopifyResponse.error });
+
+                // change shopify form data
+                notyf.success({ message: shopifyResponse.message });
+
+            } catch (error) {
+                console.log(error);
+                notyf.error(error);
+            } finally {
+                btn.classList.remove("disable-button")
+            }
+        });
+        
+        woocommerceForm.children[0].addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = woocommerceForm.children[0].children[woocommerceForm.children[0].children.length - 1];
+            try {
+                const wooData = new FormData(e.target);
+                btn.classList.add("disable-button")
+                const wooRequest = await fetch("/connect-woocommerce", { 
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        consumer_secret: wooData.get('consumer_secret'),
+                        consumer_key: wooData.get('consumer_key'),
+                        store_url: wooData.get('store_url'),
+                        store_name: wooData.get('store_name'),
+                    })
+                });
+                const wooResponse = await wooRequest.json();
+                console.log("🚀 ~ fetchStoreDetails ~ wooResponse:", wooResponse)
+
+                if (!wooRequest.ok) return notyf.error({ message: wooResponse.message });
+
+                // change shopify form data
+                notyf.success({ message: wooResponse.message });
+
+            } catch (error) {
+                console.log(error);
+                notyf.error(error);
+            } finally {
+                btn.classList.remove("disable-button")
+            }
+        });
+
+        const fetchStoreDetails = async () => {
+            try {
+                const storeDetailsRequest = await fetch("/getstoredetails");
+                const storeDetailsResponse = await storeDetailsRequest.json();
+                console.log("🚀 ~ fetchStoreDetails ~ storeDetailsResponse:", storeDetailsResponse)
+
+                if (!storeDetailsRequest.ok) return notyf.error({ message: storeDetailsResponse.message });
+
+                // change shopify form data
+                if (storeDetailsResponse.shopify) {
+                    shopifyForm.children[0].children[2].children[1].value = storeDetailsResponse.shopify.shopName;
+                    shopifyForm.children[0].children[3].children[1].value = storeDetailsResponse.shopify.shopifyStoreURL;
+                    shopifyForm.children[0].children[4].children[1].value = storeDetailsResponse.shopify.shopifyAccessToken;
+                    shopifyForm.querySelector("button").innerText = 'Edit and Save';
+                }
+                
+                // change woocommerce store data
+                if (storeDetailsResponse.woo) {
+                    woocommerceForm.children[0].children[0].children[1].value = storeDetailsResponse.woo.shopName;
+                    woocommerceForm.children[0].children[1].children[1].value = storeDetailsResponse.woo.url;
+                    woocommerceForm.children[0].children[2].children[1].value = storeDetailsResponse.woo.consumerKey;
+                    woocommerceForm.children[0].children[3].children[1].value = storeDetailsResponse.woo.consumerSecret;
+                    woocommerceForm.querySelector("button").innerText = 'Edit and Save';
+                }
+
+            } catch (error) {
+                console.log(error);
+                notyf.error(error);
+            }
+        }
+        
+        fetchStoreDetails();
+        
+    </script>
+</body>
+
+</html>

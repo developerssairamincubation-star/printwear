@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/css/orderpage.css" />
+    <link
+      rel="stylesheet"
+      href="https://pro.fontawesome.com/releases/v6.0.0-beta3/css/all.css"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <title>
+      Order Details for <%= orderData ? orderData.orderData[0].printwearOrderId:
+      "Invalid Order ID" %>
+    </title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H19W9PLCHF">
+    </script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+
+      gtag('config', 'G-H19W9PLCHF');
+    </script>
+  </head>
+
+  <body>
+    <div class="banner">
+      <%- include('partials/side-logo.ejs') %> <%- include('partials/top.ejs')
+      %>
+    </div>
+    <div class="container">
+      <% if (!orderData) { %>
+        <div class="title">There is a server side error in generating this page</div>
+      <% } else { %>
+      <!-- "rts" | "on-hold" | "processing" | "rtd" | "shipment-cancel" | "pickup-scheduled" |
+            "out-for-pickup" | "rto" | "cancelled" | "undelivered" | "shipped" | "delivered" | "completed" -->
+      <div class="title">
+        <div class="title-status-container">
+          Order ID: <%= orderData.orderData[0].printwearOrderId %>
+          <h3 class="status-badge <%= orderData.orderData[0].deliveryStatus %>">
+            STATUS: <%= orderData.orderData[0].deliveryStatus === "return_init" ? "return initiated" : orderData.orderData[0].deliveryStatus %>
+          </h3>
+          <h3 class="status-badge <%= orderData.orderData[0].paymentStatus %>">
+            PAYMENT: <%= orderData.orderData[0].paymentStatus === "refund_init" ? "refund initiated" : orderData.orderData[0].paymentStatus %>
+          </h3>
+        </div>
+        <%
+          function isDifferenceLessThan30Days(date1, date2) {
+            // Create Date objects from the given date string and timestamp
+            const firstDate = new Date(date1);
+            const secondDate = new Date(date2);
+            
+            // Calculate the difference in milliseconds
+            const diffInMilliseconds = Math.abs(firstDate.getTime() - secondDate.getTime());
+            
+            // Convert the difference from milliseconds to days
+            const millisecondsPerDay = 24 * 60 * 60 * 1000; // Hours * minutes * seconds * milliseconds
+            const diffInDays = diffInMilliseconds / millisecondsPerDay;
+            
+            // Check if the difference in days is more than 30
+            return diffInDays < 30;
+          }
+        %>
+        <% if (["pending", "received" , "invoiced"].includes(orderData.orderData[0].deliveryStatus) && (isDifferenceLessThan30Days(orderData.orderData[0].createdAt, Date.now()))) { %>
+          <button class="orderpage-action-btn" onclick="initiateRefund(this)">Cancel Order</button>
+        <% } else if (["delivered"].includes(orderData.orderData[0].deliveryStatus) || (orderData.orderData[0].deliveryStatus === "completed" && orderData.orderData[0].shiprocketCourier.courierId !== "-1")) { %>
+          <button class="orderpage-action-btn" onclick="initiateRefund(this, 'return')">Return Order</button>
+        <% } else if (["rto-delivered", "cancelled"].includes(orderData.orderData[0].deliveryStatus) && (isDifferenceLessThan30Days(orderData.orderData[0].createdAt, Date.now()))) { %>
+          <button class="orderpage-action-btn" onclick="initiateRefund(this, 'reship')">Reship Order</button>
+        <% } %>
+      </div>
+
+      <div class="subtitle">
+        Placed on: <%= new Date(orderData.orderData[0].createdAt).toLocaleString() %>
+      </div>
+
+      <div class="columns">
+        <div class="column">
+          <div class="box">
+            <h2>Items</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>S.No</th>
+                  <th>Product</th>
+                  <th>Images</th>
+                  <th>SKU</th>
+                  <th>Price</th>
+                  <th>Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% orderData.orderData[0].items.forEach((order, i) => { %>
+                  <% const design = designData.find(design => design._id.toString() === order.designId.toString()) %>
+                  <% if (!design) return; %>
+                  <% const label = labelData && design.neckLabel? labelData.labels.find(label => label._id.toString() === design.neckLabel?.toString()): null %>
+                  <tr>
+                    <td><%= i + 1 %></td>
+                    <td><a href="<%= design.designImage.front !== "false" ? design.designImage.front : design.designImage.back %>" target="_blank"><%= design.designName %></a></td>
+                    <td>
+                      <a style="display: block;" href="<%= design.designItems[0].URL %>" target="_blank">
+                      <% if (design.frontPrice) { %>
+                      <span>Front</span>
+                      <% } else { %>
+                        <span>Back</span> %></a>
+                        <% } %>
+                      </a>
+                      <% if (design.designItems[1]) { %>
+                        <a style="display: block;" href="<%= design.designItems[1].URL %>" target="_blank">
+                          <span>Back</span>
+                        </a>
+                      <% } %>
+                      <% if (label) { %>
+                        <a style="display: block;" href="<%= label.url %>" target="_blank">
+                          <span>Neck Label</span>
+                        </a>
+                      <% } %>
+                    </td>
+                    <td><%= design.designSKU %></td>
+                    <td>₹<%= design.price.toFixed(2) %></td>
+                    <td><%= order.quantity %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+
+          <% if (orderData.orderData[0].shipRocketCourier?.courierAWB) { %>
+            <div class="box">
+              You can track your courier live by clicking the link below:
+              <a href="https://shiprocket.co/tracking/<%= orderData.orderData[0].shipRocketCourier.courierAWB %>" target="_blank"><%= orderData.orderData[0].shipRocketCourier.courierAWB %></a>
+            </div>
+          <% } %>
+
+          <% if (orderData.orderData[0].deliveryTracking && orderData.orderData[0].deliveryTracking.length > 0) { %>
+            <div class="timeline">
+              <% orderData.orderData[0].deliveryTracking.reverse().forEach(tracking=> { %>
+                <div class="timeline-item">
+                  <div class="timeline-content">
+                    <h4>
+                      <%= tracking.status %>
+                    </h4>
+                    <p style="font-size:14px">
+                      <%= tracking.activity %>
+                    </p>
+                    <p style="font-size:14px"><i class="fa fa-map-location-dot"></i>
+                      <%= tracking.location %>
+                    </p>
+                    <p style="font-size:14px">
+                      <%= new Date(tracking.date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) %>
+                    </p>
+                  </div>
+                </div>
+                <% }) %>
+            </div>
+          <% } %>
+
+
+        </div>
+
+        <div class="column">
+          <div class="box">
+            <h3>Order Information</h3>
+            <div class="order-info">
+              <p>Your customer Order ID</p>
+              <p><%= orderData.orderData[0].customerOrderId %></p>
+            </div>
+            <div class="order-info">
+              <p>Retail Price</p>
+              <p>₹<%= orderData.orderData[0].retailPrice %></p>
+            </div>
+            <div class="order-info">
+              <p>Payment mode</p>
+              <p><%= orderData.orderData[0].cashOnDelivery ? 'COD' : 'Prepaid' %></p>
+            </div>
+            <div class="order-info">
+              <p>Courier</p>
+              <p><%= orderData.orderData[0].shipRocketCourier.courierId === -1 ? "Self Pickup" : orderData.orderData[0].shipRocketCourier.courierName %></p>
+            </div>
+            <% if (orderData.orderData[0].shipRocketCourier.courierId !== -1) { %>
+              <div class="order-info">
+                <p>Delivered By</p>
+                <p><%= orderData.orderData[0].shipRocketCourier.estimatedDelivery %></p>
+              </div>
+            <% } %> 
+            <div class="order-info">
+              <p>Wallet Transaction ID</p>
+              <p><%= orderData.orderData[0].walletOrderId %></p>
+            </div>
+            <% if (orderData.orderData[0].shipRocketCourier.courierAWB) { %>
+              <div class="order-info">
+                <p>Tracking Number</p>
+                <p>
+                  <a href="https://shiprocket.co/tracking/<%= orderData.orderData[0].shipRocketCourier.courierAWB %>" target="_blank"><%= orderData.orderData[0].shipRocketCourier.courierAWB %></a>
+                </p>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="box">
+            <h3>Customer Information</h3>
+            <div class="order-info">
+              <p>Name</p>
+              <p><%= orderData.orderData[0].shippingAddress.firstName + " " + orderData.orderData[0].shippingAddress.lastName %></p>
+            </div>
+            <div class="order-info">
+              <p>Phone</p>
+              <p><%= orderData.orderData[0].shippingAddress.mobile %></p>
+            </div>
+            <div class="order-info">
+              <p>Address</p>
+              <p>
+                <%= orderData.orderData[0].shippingAddress.streetLandmark + "," %><br />
+                <%= orderData.orderData[0].shippingAddress.city + "," %><br />
+                <%= orderData.orderData[0].shippingAddress.state + ", " %><br />
+                <%= orderData.orderData[0].shippingAddress.pincode %>
+              </p>
+            </div>
+          </div>
+
+          <div class="box">
+            <h2>Cost breakup</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% 
+                  var totalProductPrice = [];
+                  var totalProductDesignArea = [];
+                  var totalProductDesignAreaBack = [];
+                  var totalProductDesignCharges = [];
+                  var totalNeckLabel = [];
+
+                  designData.forEach(design => {
+                    totalProductPrice.push(design.product.price);
+
+                    var designArea = design.designDimensions ? 
+                      (design.designDimensions.width > 0 ? (design.designDimensions.width * design.designDimensions.height) : 0) : 0;
+                    totalProductDesignArea.push(designArea.toFixed(2));
+
+                    designArea = design.backDesignDimensions ? 
+                      (design.backDesignDimensions.width > 0 ? (design.backDesignDimensions.width * design.backDesignDimensions.height) : 0) : 0;
+                    totalProductDesignAreaBack.push(designArea.toFixed(2));
+
+                    var designCharges = design.price - design.product.price - (design.neckLabel ? 10 : 0);
+                    totalProductDesignCharges.push(designCharges.toFixed(2));
+
+                    totalNeckLabel.push(design.neckLabel ? 10 : 0);
+                  });
+                %>
+                <tr>
+                  <td>Product Price</td>
+                  <td>₹<%= totalProductPrice.join(" + ₹") %></td>
+                </tr>
+                <tr>
+                  <td>Front Design Area</td>
+                  <td><%= totalProductDesignArea.join(" + ") %> (in²)</td>
+                </tr>
+                <tr>
+                  <td>Back Design Area</td>
+                  <td><%= totalProductDesignAreaBack.join(" + ") %> (in²)</td>
+                </tr>
+                <tr>
+                  <td>Design Print Charges</td>
+                  <td>₹<%= totalProductDesignCharges.join(" + ₹") %></td>
+                </tr>
+                <tr>
+                  <td>Neck Label</td>
+                  <td>₹<%= totalNeckLabel.join(" + ₹") %></td>
+                </tr>
+                <tr>
+                  <td>Total Product price (print + label)</td>
+                  <% 
+                    var totalPP = []; 
+                    orderData.orderData[0].items.forEach(order => { 
+                      totalPP.push(order.price.toFixed(2)).toFixed(2); 
+                    }); 
+                  %>
+                  <td>₹<%= totalPP.join(" + ₹") %></td>
+                </tr>
+                <tr>
+                  <td>Quantity</td>
+                  <% 
+                    var totalQty = []; 
+                    orderData.orderData[0].items.forEach(design => { 
+                      totalQty.push(design.quantity); 
+                    }); 
+                  %>
+                  <td><%= totalQty.join(" + ") %></td>
+                </tr>
+                <tr>
+                  <td>Delivery Charge</td>
+                  <td>₹<%= orderData.orderData[0].deliveryCharges %></td>
+                </tr>
+                <% if (orderData.orderData[0].cashOnDelivery) { %>
+                <tr>
+                  <td>COD Charges</td>
+                  <td>₹50</td>
+                </tr>
+                <% } %>
+                <tr>
+                  <td>Tax <%= orderData.orderData[0].shippingAddress.state != "Tamil Nadu" ? '(GST 5%)' : '(CGST 2.5% + SGST 2.5%)' %></td>
+                  <td>₹<%= (orderData.orderData[0].taxes).toFixed(2) %></td>
+                </tr>
+                <tr>
+                  <td><strong>Total</strong></td>
+                  <td>₹<%= orderData.orderData[0].amountPaid.toFixed(2) %></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <script src="/js/vendor/aos.min.js"></script>
+      <script>
+        AOS.init();
+        var notyf = new Notyf();
+
+        const initiateRefund = async (el, type = "cancel") => {
+          el.classList.add("disable-button");
+          let cancelOrderConfirmation = 
+            type === "return" ? confirm("If you initiate return, delivery person comes for return pickup. You can reship this order later with added shipping charges. Do you wish to return this order?")
+            : type === "reship" ? confirm("You will be taken to reshipping page where you can reship to a new delivery address. Delivery charges will be deducted. Do you wish to continue?")
+            : confirm("Cancelling this order will refund your wallet. You can reship this order later. Do you wish to cancel order?");
+
+          if (!cancelOrderConfirmation) return el.classList.remove("disable-button");
+
+          try {
+            const initiateRefundRequest = await fetch("/initiaterefund", {
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: "<%= orderData.orderData[0].printwearOrderId %>",
+                method: type
+              }),
+              method: "POST",
+              redirect: "follow"
+            });
+
+            if (initiateRefundRequest.redirected) return (location.href += "/reship");
+
+            const initiateRefundResponse = await initiateRefundRequest.json();
+            console.log(initiateRefundResponse);
+
+            if (!initiateRefundRequest.ok) {
+              setTimeout(() => { location.reload(); }, 3000);
+              return notyf.error(initiateRefundResponse.message);
+            }
+
+            setTimeout(() => { location.reload(); }, 2000);
+            return notyf.success(initiateRefundResponse.message);
+          } catch (error) {
+            console.log(error);
+            return notyf.error("Error in initiating refund!");
+          }
+        };
+      </script>
+    <% } %>
+
+  </body>
+</html>
