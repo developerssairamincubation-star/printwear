@@ -88,6 +88,54 @@ const CASHFREE_BASE_URL =
 /** check old commit to see removed key from .env */
 const ZOHO_INVOICE_ORGANIZATION_ID = "60035071106";
 
+const ROUND_NECK_PRICE_OVERRIDES = {
+  XS: 190,
+  S: 190,
+  M: 190,
+  L: 190,
+  XL: 190,
+  "2XL": 210,
+  "3XL": 220,
+  "4XL": 230,
+  "5XL": 240,
+};
+
+const COLLAR_PRICE_OVERRIDES = {
+  XS: 220,
+  S: 220,
+  M: 220,
+  L: 220,
+  XL: 220,
+  "2XL": 230,
+};
+
+const getNormalizedSize = (size = "") => {
+  const normalizedSize = String(size).replace(/\s+/g, "").toUpperCase();
+  const sizeAlias = {
+    XXL: "2XL",
+    XXXL: "3XL",
+    XXXXL: "4XL",
+    XXXXXL: "5XL",
+  };
+
+  return sizeAlias[normalizedSize] || normalizedSize;
+};
+
+const getOverriddenProductPrice = (style = "", size = "") => {
+  const normalizedStyle = String(style).toLowerCase();
+  const normalizedSize = getNormalizedSize(size);
+
+  if (normalizedStyle.includes("collar")) {
+    return COLLAR_PRICE_OVERRIDES[normalizedSize];
+  }
+
+  if (normalizedStyle.includes("round neck")) {
+    return ROUND_NECK_PRICE_OVERRIDES[normalizedSize];
+  }
+
+  return undefined;
+};
+
 exports.register = async (req, res) => {
   // validate request
   if (!req.body) {
@@ -1487,9 +1535,25 @@ exports.getZohoProducts = async (req, res) => {
   try {
     const zohoProductsData = await ZohoProductModel.find({});
     const zohoProductObjects = {};
-    zohoProductsData.forEach(
-      (product) => (zohoProductObjects[product.style] = product),
-    );
+
+    zohoProductsData.forEach((product) => {
+      const productObject = product.toObject();
+      const style = productObject.style;
+
+      Object.keys(productObject.colors || {}).forEach((color) => {
+        const sizes = productObject.colors[color]?.sizes || {};
+
+        Object.keys(sizes).forEach((size) => {
+          const overriddenPrice = getOverriddenProductPrice(style, size);
+          if (overriddenPrice !== undefined) {
+            sizes[size].price = overriddenPrice;
+          }
+        });
+      });
+
+      zohoProductObjects[style] = productObject;
+    });
+
     res.json(zohoProductObjects);
   } catch (error) {
     console.log(error);
