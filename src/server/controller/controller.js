@@ -597,17 +597,57 @@ exports.dashboard = async (req, res) => {
 // for CRD on designgallery images
 exports.uploadimage = async (req, res) => {
   try {
+    console.log("========== IMAGE UPLOAD START ==========");
+    console.log("User ID:", req.userId);
+    console.log("Request File:", req.file);
+
+    // Validate uploaded file
+    if (!req.file) {
+      console.error("No file received from request");
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
+
     const fileBuffer = req.file.buffer;
+
     const fileName = req.file.originalname
       .replace(/ /g, "-")
       .replace(/[^a-zA-Z0-9-_.]/g, "");
-    const fileReference = storageReference.child(
-      `images/${req.userId + "_" + otpGen.generate(4, { specialChars: false }) + "_" + fileName}`,
-    );
-    await fileReference.put(fileBuffer, { contentType: "image/png" });
+
+    const generatedFileName = `images/${
+      req.userId +
+      "_" +
+      otpGen.generate(4, { specialChars: false }) +
+      "_" +
+      fileName
+    }`;
+
+    console.log("Generated File Name:", generatedFileName);
+    console.log("Original File Name:", req.file.originalname);
+    console.log("Mime Type:", req.file.mimetype);
+    console.log("File Size:", req.file.size);
+
+    const fileReference = storageReference.child(generatedFileName);
+
+    console.log("Uploading file to Firebase Storage...");
+
+    await fileReference.put(fileBuffer, {
+      contentType: req.file.mimetype,
+    });
+
+    console.log("Upload completed successfully");
+
+    console.log("Generating download URL...");
+
     const fileDownloadURL = await fileReference.getDownloadURL();
 
-    await ImageModel.findOneAndUpdate(
+    console.log("Download URL generated:", fileDownloadURL);
+
+    console.log("Saving image metadata to MongoDB...");
+
+    const imageDocument = await ImageModel.findOneAndUpdate(
       { userId: req.userId },
       {
         $setOnInsert: {
@@ -622,13 +662,55 @@ exports.uploadimage = async (req, res) => {
           },
         },
       },
-      { new: true, upsert: true },
+      {
+        new: true,
+        upsert: true,
+      }
     );
 
-    res.status(200).json({ message: "Success" });
+    console.log("MongoDB updated successfully");
+    console.log("Updated Document ID:", imageDocument?._id);
+
+    console.log("========== IMAGE UPLOAD SUCCESS ==========");
+
+    return res.status(200).json({
+      success: true,
+      message: "Image uploaded successfully",
+      url: fileDownloadURL,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Failed to upload image" });
+    console.error("========== IMAGE UPLOAD ERROR ==========");
+    console.error("Error Name:", error?.name);
+    console.error("Error Message:", error?.message);
+    console.error("Error Code:", error?.code);
+    console.error("Error Stack:", error?.stack);
+
+    // Log complete object
+    console.error("Complete Error Object:");
+    console.dir(error, { depth: null });
+
+    // Firebase specific details
+    if (error?.serverResponse) {
+      console.error("Firebase Server Response:");
+      console.error(error.serverResponse);
+    }
+
+    if (error?.response) {
+      console.error("Response:");
+      console.dir(error.response, { depth: null });
+    }
+
+    console.error("Request User ID:", req.userId);
+    console.error("Request File:", req.file);
+
+    console.error("========== END ERROR ==========");
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload image",
+      actualError: error?.message,
+      errorCode: error?.code,
+    });
   }
 };
 
